@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# This script comes with ABSOLUTELY NO WARRANTY, use at own risk
+# Copyright (C) 2020 Osiris Alejandro Gomez <osiux@osiux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+[[ -n "$COLS"       ]] || COLS="$(tput cols)"
+[[ -n "$YEAR"       ]] || YEAR="$(date +%Y)"
+[[ -n "$MONTH"      ]] || MONTH="$(date +%m)"
+[[ -n "$CALENDAR"   ]] || CALENDAR="$HOME/.calendar"
+[[ -z "$1"          ]] || MONTH="$1"
+[[ -z "$2"          ]] || YEAR="$2"
+[[ -z "$3"          ]] || CALENDAR="$3"
+[[ -e "$CALENDAR"   ]] || exit 1
+
+for bin in pcal w3m
+do
+  if ! command -v $bin >/dev/null
+  then
+    echo "NOT FOUNT $bin"
+    exit 1
+  fi
+done
+
+TMP="$(mktemp --suffix .tmp)"
+HTML="$(mktemp --suffix '.html')"
+
+sed 's/\ \+/ /g' "$CALENDAR" \
+  | grep -v '^#'             \
+  | grep -v '^$'             \
+  | while read -r LINE
+do
+
+  F=$(echo "$LINE" | awk '{print $1}')
+
+  case "$F" in
+    even|all)
+      echo "$LINE"
+      ;;
+    *)
+      echo "$LINE" | cut -c -35 | sed 's/#.*//g'
+      ;;
+  esac
+
+done | sort -k1,2 > "$TMP"
+
+[[ -n "$CAL_DEBUG" ]] && cat -n "$TMP"
+
+pcal                \
+  -B                \
+  -H                \
+  -S                \
+  -a "${LANG%_*}"   \
+  -d Inconsolata/12 \
+  -f "$TMP"         \
+  -n Inconsolata/6  \
+  -s 1.0:0.0:0.0    \
+  -t Inconsolata/10 \
+  "$MONTH"          \
+  "$YEAR"           > "$HTML"
+
+if [[ -n "$DISPLAY" ]]
+then
+  if xdg-mime query default text/html >/dev/null
+  then
+    xdg-open "$HTML"
+  fi
+else
+  echo "$HTML"
+fi
