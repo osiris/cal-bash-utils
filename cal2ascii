@@ -1,0 +1,147 @@
+#!/bin/bash
+
+# This script comes with ABSOLUTELY NO WARRANTY, use at own risk
+# Copyright (C) 2020 Osiris Alejandro Gomez <osiux@osiux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+# shellcheck disable=SC1090
+# shellcheck disable=SC1091
+# shellcheck source=/dev/null
+
+DIR_BIN="$(dirname "$0")" && source "$DIR_BIN/calcommon"
+
+function usage()
+{
+cat << EOF
+
+## \`$BIN\` Convert Month Calendar to ASCII
+
+### Usage:
+
+\`\`\`bash
+
+  $BIN [MONTH] [YEAR] [CALENDAR]
+
+\`\`\`
+
+### Description
+
+Show month calendar in _ASCII_ reading reminders in \`~/.calendar\`
+file, convert to _HTML_ using \`pcal\` to finally render in terminal
+using \`w3m\`.
+
+### Example:
+
+\`\`\`bash
+
+  $BIN
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │                                                                  │
+  │                            April 2023                            │
+  │                                                                  │
+  ├────────┬────────┬─────────┬─────────┬─────────┬────────┬─────────┤
+  │ Sunday │ Monday │ Tuesday │Wednesday│Thursday │ Friday │Saturday │
+  ├────────┴────────┴─────────┴─────────┴─────────┴────────┼─────────┤
+  │                                                        │1        │
+  │                                                        │         │
+  │                                                        │         │
+  ├────────┬────────┬─────────┬─────────┬─────────┬────────┼─────────┤
+  │2       │3       │4        │5        │6        │7       │8        │
+  │        │        │         │         │         │        │         │
+  │        │        │         │         │         │        │         │
+  ├────────┼────────┼─────────┼─────────┼─────────┼────────┼─────────┤
+  │9       │10      │11       │12       │13       │14      │15       │
+  │        │        │         │         │         │        │         │
+  │        │        │         │         │         │        │         │
+  ├────────┼────────┼─────────┼─────────┼─────────┼────────┼─────────┤
+  │16      │17      │18       │19       │20       │21      │22       │
+  │        │        │         │         │         │        │FLISoL   │
+  │        │        │         │         │         │        │         │
+  ├────────┼────────┼─────────┼─────────┼─────────┼────────┼─────────┤
+  │23      │24      │25       │26       │27       │28      │29       │
+  │        │        │         │         │         │        │         │
+  │        │        │         │         │         │        │         │
+  ├────────┼────────┴─────────┴─────────┴─────────┴────────┴─────────┤
+  │30      │                                                         │
+  │        │                                                         │
+  │        │                                                         │
+  └────────┴─────────────────────────────────────────────────────────┘
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
+[[ -n "$COLS"       ]] || COLS="$(tput cols)"
+[[ -n "$YEAR"       ]] || YEAR="$(date +%Y)"
+[[ -n "$MONTH"      ]] || MONTH="$(date +%m)"
+[[ -n "$CALENDAR"   ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'   ]] && CALENDAR="$PWD/.calendar"
+[[ -z "$1"          ]] || MONTH="$1"
+[[ -z "$2"          ]] || YEAR="$2"
+[[ -z "$3"          ]] || CALENDAR="$3"
+[[ -e "$CALENDAR"   ]] || die "NOT FOUND CALENDAR"
+
+for bin in pcal w3m
+do
+  if ! command -v $bin >/dev/null
+  then
+    echo "NOT FOUNT $bin"
+    exit 1
+  fi
+done
+
+TMP="$(mktemp --suffix .tmp)"
+HTML="$(mktemp --suffix '.html')"
+
+sed 's/\ \+/ /g' "$CALENDAR" \
+  | grep -v '^#'             \
+  | grep -v '^$'             \
+  | while read -r LINE
+do
+
+  F=$(echo "$LINE" | awk '{print $1}')
+
+  case "$F" in
+    even|all)
+      echo "$LINE"
+      ;;
+    *)
+      echo "$LINE" | cut -c -35 | sed 's/#.*//g'
+      ;;
+  esac
+
+done | sort -k1,2 > "$TMP"
+
+[[ -n "$CAL_DEBUG" ]] && cat -n "$TMP"
+
+pcal                \
+  -B                \
+  -H                \
+  -S                \
+  -a "${LANG%_*}"   \
+  -d Inconsolata/12 \
+  -f "$TMP"         \
+  -n Inconsolata/6  \
+  -s 1.0:0.0:0.0    \
+  -t Inconsolata/10 \
+  "$MONTH"          \
+  "$YEAR"           > "$HTML" && w3m -dump -cols "$COLS" "$HTML"
+
+rm -f "$TMP"
