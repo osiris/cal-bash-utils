@@ -44,6 +44,6 @@ echo "$ITEMS" | while read -r ITEM
 do
 
   echo "## $ITEM"
-  grep -i "^$ITEM" "$CAL" | sort -k2
+  grep -i "^$ITEM" "$CALENDAR" | sort -k2
 
 done | awk '!seen[$1$2$3$4$5]++' > "$TMP" && mv -f "$TMP" "$CALENDAR"
