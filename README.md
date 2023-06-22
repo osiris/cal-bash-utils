@@ -11,7 +11,7 @@ Clone the repository:
 ```bash
 
   cd /opt
-  git clone
+  git clone https://gitlab.com/osiux/cal-bash-utils.git
 
 ```
 
