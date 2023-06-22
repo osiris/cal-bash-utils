@@ -18,18 +18,15 @@
 
 [[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
 [[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -n "$DAY"      ]] || DAY="$(date +%e)"
+[[ -n "$DAY"      ]] || DAY="$(date +%d)"
 [[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
 [[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
 [[ -e "$CALENDAR" ]] || exit 1
+[[ -n "$DATE"     ]] || DATE="$YEAR-$MONTH-$DAY"
 
-DAY="${DAY/ /}"
-
-DAYS="$(for i in {1..7};do date -d "+$i day" +%d;done \
+DAYS="$(for i in {0..6};do date -d "$DATE +$i day" +%d;done \
   | tr '\n' '|' \
   | sed 's/|$//g')"
-
-[[ "$DAY" -gt 28 ]] && MONTH="$(date +%m -d '+1 week')"
 
 REGEX="$MONTH/($DAYS)"
 printf "%s %s\n" "$(date +%F)" 'TODAY'
