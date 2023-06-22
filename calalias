@@ -1,0 +1,2 @@
+alias vcal='vim ~/.calendar'
+alias calv='vim ~/.calendar'

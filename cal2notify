@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# This script comes with ABSOLUTELY NO WARRANTY, use at own risk
+# Copyright (C) 2019 Osiris Alejandro Gomez <osiux@osiux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+[[ -n "$DISPLAY"       ]] || export DISPLAY=":0"
+[[ -n "$TIME_IGNORE"   ]] || TIME_IGNORE='4800'
+[[ -n "$TIME_NORMAL"   ]] || TIME_NORMAL='3600'
+[[ -n "$TIME_CRITICAL" ]] || TIME_CRITICAL='1800'
+
+NOW="$(date '+%H:%M')"
+ENOW="$(date -d "1970-01-01 $NOW" '+%s')"
+
+calday                          \
+  | grep -v TODAY               \
+  | grep -E '[0-9]{2}:[0-9]{2}' \
+  | cut -c 12-                  \
+  | while read -r T M
+do
+
+  HHMM="$(echo "$T" | cut -c -5)"
+  ETIME="$(date -d "1970-01-01 $HHMM" '+%s')"
+  DIFF="$((ETIME-ENOW))"
+  MSG="$(toilet -f future "$T $M")"
+  LEVEL='low'
+
+  >&2 echo "$ETIME $ENOW $DIFF $HHMM $M"
+
+  [[ "$DIFF" -lt 0                ]] && continue
+  [[ "$DIFF" -gt "$TIME_IGNORE"   ]] && continue
+  [[ "$DIFF" -lt "$TIME_NORMAL"   ]] && LEVEL='normal'
+  [[ "$DIFF" -lt "$TIME_CRITICAL" ]] && LEVEL='critical'
+
+  >&2 echo "$LEVEL $MSG"
+
+  notify-send -u "$LEVEL" "$MSG"
+
+  [[ "$LEVEL" = 'critical'        ]] && ntfy-msg.sh "$T $M" 2>/dev/null
+
+done
