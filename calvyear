@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# shellcheck disable=SC2001
 # shellcheck disable=SC2086
+
+BIN="$(basename "$0")"
 
 function die()
 {
@@ -24,35 +27,52 @@ function die()
   exit 1
 }
 
-[[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
-[[ -z "$2"        ]] || YEAR="$2"
-[[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -z "$1"        ]] || MONTH="$(printf "%02d" "$1")"
-[[ -n "$DAY"      ]] || DAY='01'
-[[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
-[[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
-[[ -e "$CALENDAR" ]] || die "NOT FOUND .calendar"
-[[ -n "$M"        ]] || M="${MONTH##0*}"
-[[ -n "$DIR"      ]] || DIR="$HOME/.jrnl"
-[[ -d "$DIR"      ]] || mkdir -p "$DIR/$YEAR"
-[[ -n "$JRNL"     ]] || JRNL="$DIR/$YEAR/$MONTH.jrnl"
-[[ -e "$JRNL"     ]] || caljmonth "$MONTH" "$YEAR" > "$JRNL"
-[[ -n "$MONTHS"   ]] || MONTHS="$DIR/$YEAR/year.jrnl"
-[[ -n "$VIM"      ]] || VIM="$(which vim)"
+function usage()
+{
+cat << EOF
 
-MM="${MONTH##*0}"
-DIFF="$((12 - MM))"
-FILES="$JRNL "
+## \`$BIN\` generate and visualize year bullet journal output using caljyear
 
-for i in $(seq 1 $DIFF)
-do
-  MM="$(printf "%02d" "$((MONTH + i))")"
-  JRNL="$DIR/$YEAR/$MM.jrnl"
-  # FIXME ADD CACHE [[ -e "$JRNL" ]] ||
-  caljmonth "$MM" "$YEAR"
-  FILES+="$JRNL "
-done
+### Usage:
 
-paste -d '  ' $FILES | bullet2ascii > "$MONTHS"
+\`\`\`bash
+
+  $BIN [MONTH] [YEAR]
+
+\`\`\`
+
+### Description
+
+Generate and open vim with calendar files for each month in
+\`~/.jrnl/YYYY/MM.jrnl\`, from the current month to the end of the year
+using \`caljyear\`.
+
+### Example:
+
+\`\`\`bash
+
+	$BIN
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
+[[ -n "$BASH_DEBUG" ]] && set -x
+[[ -n "$YEAR"       ]] || YEAR="$(date +%Y)"
+[[ -z "$2"          ]] || YEAR="$2"
+[[ -n "$MONTH"      ]] || MONTH="$(date +%m  | sed 's/^0//g')"
+[[ -z "$1"          ]] || MONTH="$(echo "$1" | sed 's/^0//g')"
+[[ -n "$CALENDAR"   ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'   ]] && CALENDAR="$PWD/.calendar"
+[[ -e "$CALENDAR"   ]] || die "NOT FOUND .calendar"
+[[ -n "$DIR"        ]] || DIR="$HOME/.jrnl"
+[[ -d "$DIR"        ]] || mkdir -p "$DIR/$YEAR"
+[[ -n "$VIM"        ]] || VIM="$(which vim)"
+
+FILES="$(caljyear $MONTH $YEAR)"
 
 $VIM -O $FILES
