@@ -17,6 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 # shellcheck disable=SC2001
+# shellcheck disable=SC2086
 
 BIN="$(basename "$0")"
 
@@ -36,7 +37,7 @@ cat << EOF
 
 \`\`\`bash
 
-  $BIN
+  $BIN [MONTH] [YEAR]
 
 \`\`\`
 
@@ -45,11 +46,16 @@ cat << EOF
 Generate calendar files for each month in \`~/.jrnl/YYYY/MM.jrnl\`,
 from the current month to the end of the year using caljmonth.
 
+Return filenames of each month and save one file consolidate output in
+\`~/.jrnl/YYYY/YYYY.jrnl\`
+
 ### Example:
 
 \`\`\`bash
 
-	$BIN
+	$BIN 10 2023
+
+  ~/.jrnl/2023/10.jrnl ~/.jrnl/2023/11.jrnl ~/.jrnl/2023/12.jrnl
 
 \`\`\`
 
@@ -69,18 +75,24 @@ exit 0
 [[ -e "$CALENDAR"   ]] || die "NOT FOUND .calendar"
 [[ -n "$DIR"        ]] || DIR="$HOME/.jrnl"
 [[ -d "$DIR"        ]] || mkdir -p "$DIR/$YEAR"
-
-if [[ "$MONTH" -ge 12 ]]
-then
-  caljmonth 12 "$YEAR"
-  exit 0
-fi
+[[ -n "$JRNL"       ]] || JRNL="$DIR/$YEAR/$MONTH.jrnl"
+[[ -n "$OUTPUT"     ]] || OUTPUT="$DIR/$YEAR/$YEAR.jrnl"
+[[ "$MONTH" -gt 12  ]] && MONTH=12
 
 MONTHS="$(( 12 - MONTH ))"
+FILES=""
 
 for i in $(seq 0 $MONTHS)
 do
 
+  MM="$(printf "%02d" "$((MONTH + i))")"
+  JRNL="$DIR/$YEAR/$MM.jrnl"
   caljmonth "$((MONTH + i))" "$YEAR"
+  FILES+="$JRNL "
 
 done
+
+# SAVE AL MONTHS IN ONE FILE FOR PRINTING
+paste -d '  ' $FILES | bullet2ascii > "$OUTPUT"
+
+echo "$FILES"
