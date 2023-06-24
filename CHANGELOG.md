@@ -1,8 +1,11 @@
-# [_CAL-BASH-UTILS CHANGELOG_](https://gitlab.com/osiux/cal-bash-utils)
+# [_CAL-BASH-UTILS CHANGELOG_](git@gitlab.com:osiux/cal-bash-utils.git)
 
  - this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-## [`Unreleased - 2023-06-22`](git@gitlab.com:osiux/cal-bash-utils/-/compare/v0.1.0...develop)
+## [`Unreleased - 2023-06-24`](git@gitlab.com:osiux/cal-bash-utils/-/compare/v0.2.0...develop)
+
+
+## [`v0.2.0 - 2023-06-24`](git@gitlab.com:osiux/cal-bash-utils/-/compare/v0.1.0...v0.2.0) _add scripts for convert calendar events into plain text journaling_
 
 ### `ascii2bullet`
 
@@ -35,14 +38,18 @@
 
 ### `caljmonth`
 
+- general refactor, add help with example, prevent octal error, use CAL_EXCLUDE variable to exclude events
 - add script to generate bullet journal output from calmonth
 
 ### `caljyear`
 
+- return filenames of each month and consolidate in one file for printing
+- general refactor, add help with example, prevent octal error and invalid month
 - add script to generate bullet journal output from caljmonth for the current month and the following months until the end of the year
 
 ### `calvmonth`
 
+- general refactor, add help with example and prevent octal error
 - add script to visualize bullet journal output from caljmonth
 
 ### `calvmonths`
@@ -51,6 +58,7 @@
 
 ### `calvyear`
 
+- add help with example and replace caljmonth with caljyear
 - add script to visualize bullet journal output from caljmonth for the current month and the following months until the end of the year
 
 ### `calweek`
@@ -60,6 +68,10 @@
 ### `calweekly`
 
 - add script to repeat an event weekly
+
+### `CHANGELOG`
+
+- add v0.1.0 and Unreleased - 2023-06-22
 
 ## [`v0.1.0 - 2023-06-22`](git@gitlab.com:osiux/cal-bash-utils/-/compare/1ea5f57...v0.1.0) _first public release_
 
