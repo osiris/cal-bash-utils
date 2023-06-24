@@ -18,28 +18,69 @@
 
 # shellcheck disable=SC2001
 
+BIN="$(basename "$0")"
+
 function die()
 {
   echo >&2 "$1"
   exit 1
 }
 
-[[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
-[[ -z "$2"        ]] || YEAR="$2"
-[[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -z "$1"        ]] || MONTH="$1"
-[[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
-[[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
-[[ -e "$CALENDAR" ]] || die "NOT FOUND .calendar"
-[[ -n "$M"        ]] || M="$(echo "$MONTH" | sed 's/^0//g')"
-[[ -n "$MM"       ]] || MM="$(printf "%02d" "$M")"
-[[ -n "$DIR"      ]] || DIR="$HOME/.jrnl"
-[[ -d "$DIR"      ]] || mkdir -p "$DIR"
-[[ -n "$JRNL"     ]] || JRNL="$DIR/$MONTH.jrnl"
+function usage()
+{
+cat << EOF
 
-DIFF="$((12 - M - 1))"
+## \`$BIN\` generate year bullet journal output using caljmonth
 
-for i in $(seq 1 $DIFF)
+### Usage:
+
+\`\`\`bash
+
+  $BIN
+
+\`\`\`
+
+### Description
+
+Generate calendar files for each month in \`~/.jrnl/YYYY/MM.jrnl\`,
+from the current month to the end of the year using caljmonth.
+
+### Example:
+
+\`\`\`bash
+
+	$BIN
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
+[[ -n "$BASH_DEBUG" ]] && set -x
+[[ -n "$YEAR"       ]] || YEAR="$(date +%Y)"
+[[ -z "$2"          ]] || YEAR="$2"
+[[ -n "$MONTH"      ]] || MONTH="$(date +%m  | sed 's/^0//g')"
+[[ -z "$1"          ]] || MONTH="$(echo "$1" | sed 's/^0//g')"
+[[ -n "$CALENDAR"   ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'   ]] && CALENDAR="$PWD/.calendar"
+[[ -e "$CALENDAR"   ]] || die "NOT FOUND .calendar"
+[[ -n "$DIR"        ]] || DIR="$HOME/.jrnl"
+[[ -d "$DIR"        ]] || mkdir -p "$DIR/$YEAR"
+
+if [[ "$MONTH" -ge 12 ]]
+then
+  caljmonth 12 "$YEAR"
+  exit 0
+fi
+
+MONTHS="$(( 12 - MONTH ))"
+
+for i in $(seq 0 $MONTHS)
 do
+
   caljmonth "$((MONTH + i))" "$YEAR"
+
 done
