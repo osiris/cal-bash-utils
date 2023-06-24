@@ -18,26 +18,111 @@
 
 # shellcheck disable=SC2001
 
+BIN="$(basename "$0")"
+
 function die()
 {
   echo >&2 "$1"
   exit 1
 }
 
-[[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
-[[ -z "$2"        ]] || YEAR="$2"
-[[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -z "$1"        ]] || MONTH="$1"
-[[ -n "$DAY"      ]] || DAY='01'
-[[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
-[[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
-[[ -e "$CALENDAR" ]] || die "NOT FOUND .calendar"
-[[ -n "$M"        ]] || M="$(echo "$MONTH" | sed 's/^0//g')"
-[[ -n "$MM"       ]] || MM="$(printf "%02d" "$M")"
-[[ -n "$DIR"      ]] || DIR="$HOME/.jrnl"
-[[ -d "$DIR"      ]] || mkdir -p "$DIR/$YEAR"
-[[ -n "$JRNL"     ]] || JRNL="$DIR/$YEAR/$MM.jrnl"
-[[ -n "$MAX"      ]] || MAX='22'
+function usage()
+{
+cat << EOF
+
+## \`$BIN\` generate month bullet journal output using calmonth
+
+### Usage:
+
+\`\`\`bash
+
+  $BIN
+
+\`\`\`
+
+### Description
+
+Generate file in \`~/.jrnl/YYYY/MM.jrnl\` with calendar month using
+default output of \`cal\` command and group by week events from
+\`~/.calendar\` using \`calmonth\` command, removing datetime and
+leaving only events and tasks.
+
+### Example:
+
+\`\`\`bash
+
+	$BIN
+
+  cat ~/.jrnl/2023/06.jrnl
+
+       June 2023
+  Su Mo Tu We Th Fr Sa
+               1  2  3
+   4  5  6  7  8  9 10
+  11 12 13 14 15 16 17
+  18 19 20 21 22 23 24
+  25 26 27 28 29 30
+
+
+  WEEK 1 ---------------
+
+  × DevSecOps
+  × FLLS semver
+  × CLIBRE
+
+
+  WEEK 4 ---------------
+
+  ∘ CUMPLE OSi
+  × RETIRO PELUZA
+  × LILIAN SM
+  ∘ FERIADO TUR
+  × AEP -> USH
+  ∘ FERIADO BLG
+  × SPIDERMAN
+  ‐ HIFU ALE
+  → ALE 11F
+  ∘ PARO DOCENTE
+  × GYM
+  · GYM
+  · FIBER
+  ∘ MAKEUP VPQE
+
+  WEEK 5 ---------------
+
+  · COOP CONSEJO
+  · USH -> AEP
+  ‐ ALE 11F
+  ‐ ALE 11F
+  ‐ ALE 11F
+  · FLLS TEAM
+  ∘ REDHAT EDA
+  ∘ REDHAT K8S
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
+[[ -n "$BASH_DEBUG"  ]] && set -x
+[[ -n "$YEAR"        ]] || YEAR="$(date +%Y)"
+[[ -z "$2"           ]] || YEAR="$2"
+[[ -n "$MONTH"       ]] || MONTH="$(date +%m)"
+[[ -z "$1"           ]] || MONTH="$(echo "$1" | sed 's/^0//g')"
+[[ -n "$DAY"         ]] || DAY='01'
+[[ -n "$CALENDAR"    ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'    ]] && CALENDAR="$PWD/.calendar"
+[[ -e "$CALENDAR"    ]] || die "NOT FOUND .calendar"
+[[ -n "$M"           ]] || M="$(echo "$MONTH" | sed 's/^0//g')"
+[[ -n "$MM"          ]] || MM="$(printf "%02d" "$M")"
+[[ -n "$DIR"         ]] || DIR="$HOME/.jrnl"
+[[ -d "$DIR"         ]] || mkdir -p "$DIR/$YEAR"
+[[ -n "$JRNL"        ]] || JRNL="$DIR/$YEAR/$MM.jrnl"
+[[ -n "$MAX"         ]] || MAX='22'
+[[ -n "$CAL_EXCLUDE" ]] || CAL_EXCLUDE='(EXCLUDE_REGEX)'
 
 printf "\\n" > "$JRNL"
 LC_ALL='en_US.UTF-8' cal "$MONTH" "$YEAR" >> "$JRNL" 2>/dev/null
@@ -66,7 +151,7 @@ YEAR="$YEAR" MONTH="$MONTH" DAY="$DAY" calmonth \
     done \
   | sed -e 's/[0-9]\+:[0-9]\+ //g' \
   | sed -e 's/[0-9]\+:[0-9]\+-//g' \
-  | grep -vE 'NANU'                \
+  | grep -vE "$CAL_EXCLUDE"        \
   | while read -r LINE
     do
       printf "%-*s\\n" "$MAX" "$LINE"
