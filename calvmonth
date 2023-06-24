@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# shellcheck disable=SC2086
+# shellcheck disable=SC2001
+
+BIN="$(basename "$0")"
 
 function die()
 {
@@ -24,18 +26,99 @@ function die()
   exit 1
 }
 
+function usage()
+{
+cat << EOF
+
+## \`$BIN\` generate bullet journal output using calmonth
+
+### Usage:
+
+\`\`\`bash
+
+# shellcheck disable=SC2086
+  $BIN
+
+\`\`\`
+
+### Description
+
+Generate a open vim with file in \`~/.jrnl/YYYY/MM.jtnl\` with calendar
+month using default output of \`cal\` command and group by week events
+from \`~/.calendar\` using \`caljmonth\` command, removing datetime and
+leaving only events and tasks.
+
+### Example:
+
+\`\`\`bash
+
+	$BIN
+
+       June 2023
+  Su Mo Tu We Th Fr Sa
+               1  2  3
+   4  5  6  7  8  9 10
+  11 12 13 14 15 16 17
+  18 19 20 21 22 23 24
+  25 26 27 28 29 30
+
+
+  WEEK 1 ---------------
+
+  × DevSecOps
+  × FLLS semver
+  × CLIBRE
+
+
+  WEEK 4 ---------------
+
+  ∘ CUMPLE OSi
+  × RETIRO PELUZA
+  × LILIAN SM
+  ∘ FERIADO TUR
+  × AEP -> USH
+  ∘ FERIADO BLG
+  × SPIDERMAN
+  ‐ HIFU ALE
+  → ALE 11F
+  ∘ PARO DOCENTE
+  × GYM
+  · GYM
+  · FIBER
+  ∘ MAKEUP VPQE
+
+  WEEK 5 ---------------
+
+  · COOP CONSEJO
+  · USH -> AEP
+  ‐ ALE 11F
+  ‐ ALE 11F
+  ‐ ALE 11F
+  · FLLS TEAM
+  ∘ REDHAT EDA
+  ∘ REDHAT K8S
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
 [[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
 [[ -z "$2"        ]] || YEAR="$2"
 [[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -z "$1"        ]] || MONTH="$(printf "%02d" "$1")"
+[[ -z "$1"        ]] || MONTH="$(echo "$1" | sed 's/^0//g')"
 [[ -n "$DAY"      ]] || DAY='01'
 [[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
 [[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
 [[ -e "$CALENDAR" ]] || die "NOT FOUND .calendar"
-[[ -n "$M"        ]] || M="${MONTH##0*}"
+[[ -n "$M"        ]] || M="$(echo "$MONTH" | sed 's/^0//g')"
+[[ -n "$MM"       ]] || MM="$(printf "%02d" "$M")"
 [[ -n "$DIR"      ]] || DIR="$HOME/.jrnl"
 [[ -d "$DIR"      ]] || mkdir -p "$DIR/$YEAR"
-[[ -n "$JRNL"     ]] || JRNL="$DIR/$YEAR/$MONTH.jrnl"
+[[ -n "$JRNL"     ]] || JRNL="$DIR/$YEAR/$MM.jrnl"
 
 caljmonth "$MONTH" "$YEAR" > "$JRNL"
 
