@@ -16,25 +16,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# shellcheck disable=SC2086
+
+function die()
+{
+  echo >&2 "$1"
+  exit 1
+}
+
 [[ -n "$YEAR"     ]] || YEAR="$(date +%Y)"
+[[ -z "$2"        ]] || YEAR="$2"
 [[ -n "$MONTH"    ]] || MONTH="$(date +%m)"
-[[ -n "$DAY"      ]] || DAY="$(date +%d)"
+[[ -z "$1"        ]] || MONTH="$(printf "%02d" "$1")"
+[[ -n "$DAY"      ]] || DAY='01'
 [[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
 [[ -e '.calendar' ]] && CALENDAR="$PWD/.calendar"
-[[ -e "$CALENDAR" ]] || exit 1
-[[ -n "$DATE"     ]] || DATE="$YEAR-$MONTH-$DAY"
+[[ -e "$CALENDAR" ]] || die "NOT FOUND .calendar"
+[[ -n "$M"        ]] || M="${MONTH##0*}"
+[[ -n "$DIR"      ]] || DIR="$HOME/.jrnl"
+[[ -d "$DIR"      ]] || mkdir -p "$DIR/$YEAR"
+[[ -n "$JRNL"     ]] || JRNL="$DIR/$YEAR/$MONTH.jrnl"
+[[ -n "$MONTHS"   ]] || MONTHS="$DIR/$YEAR/months.jrnl"
+[[ -n "$VIM"      ]] || VIM="$(which vim)"
 
-DAYS="$(for i in {0..6};do date -d "$DATE +$i day" +%d;done \
-  | tr '\n' '|' \
-  | sed 's/|$//g')"
+caljmonth "$MONTH" "$YEAR" > "$JRNL"
 
-REGEX="$MONTH/($DAYS)"
-printf "%s %s\n" "$(date +%F)" 'TODAY'
+MM="${MONTH##*0}"
+DIFF=3
+FILES="$JRNL "
 
-pcal -f "$CALENDAR" -c "$YEAR" \
-  | grep -iE "$REGEX" \
-  | while read -r D REMINDER
-    do
-      DAY="$(date --date="$YEAR/$D" +%F)"
-      printf "%s %s\n" "$DAY" "$REMINDER"
-    done
+for i in $(seq 1 $DIFF)
+do
+  MM="$(printf "%02d" "$((MONTH + i))")"
+  JRNL="$DIR/$YEAR/$MM.jrnl"
+  # FIXME ADD CACHE [[ -e "$JRNL" ]] ||
+  caljmonth "$MM" "$YEAR"
+  FILES+="$JRNL "
+done
+
+paste -d '  ' $FILES | bullet2ascii > "$MONTHS"
+
+$VIM -O $FILES

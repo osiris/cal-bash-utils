@@ -54,7 +54,7 @@ do
       ;;
   esac
 
-done | sort -k1,2 > "$TMP"
+done | sort -k1,2 | bullet2ascii > "$TMP"
 
 [[ -n "$CAL_DEBUG" ]] && cat -n "$TMP"
 
