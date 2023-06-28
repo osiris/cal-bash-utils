@@ -46,4 +46,6 @@ do
   echo "## $ITEM"
   grep -i "^$ITEM" "$CALENDAR" | sort -k2
 
-done | awk '!seen[$1$2$3$4$5]++' > "$TMP" && mv -f "$TMP" "$CALENDAR"
+done \
+  | awk '!seen[$1$2$3$4$5]++' > "$TMP" \
+  && mv -f "$TMP" "$(realpath "$CALENDAR")"
