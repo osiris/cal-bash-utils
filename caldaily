@@ -18,16 +18,16 @@
 
 MSG=''
 
-[[ -n "$NOW"  ]] || NOW="$(date +%F)"
+[[ -n "$DATE" ]] || DATE="$(date +%F)"
 [[ -n "$DAYS" ]] || DAYS=30
 [[ -z "$1"    ]] || DAYS="$1"
-[[ -z "$2"    ]] || NOW="$2"
+[[ -z "$2"    ]] || DATE="$2"
 [[ -z "$3"    ]] || MSG=" $3"
 
 for D in $(seq 0 "$DAYS")
 do
-  ISO="$(date -d "$NOW + $D days" +'%F')"
-  MONTH="$(LC_ALL=en_US.UTF-8 date -d "$NOW + $D days" +'%b')"
-  DAY="$(date -d "$NOW + $D days" +'%d')"
+  ISO="$(date -d "$DATE + $D days" +'%F')"
+  MONTH="$(LC_ALL=en_US.UTF-8 date -d "$DATE + $D days" +'%b')"
+  DAY="$(date -d "$DATE + $D days" +'%d')"
   printf "%s %s%s\\n" "$ISO" "${MONTH^} $DAY" "$MSG"
 done
