@@ -16,18 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-NOW="$(date +%F)"
-WEEKS=5
-
-[[ -z "$1" ]] || WEEKS="$1"
-[[ -z "$2" ]] || NOW="$2"
-[[ -z "$3" ]] || TXT="$3"
+[[ -n "$DATE"  ]] || DATE="$(date +%F)"
+[[ -n "$WEEKS" ]] || WEEKS=5
+[[ -z "$1"     ]] || WEEKS="$1"
+[[ -z "$2"     ]] || DATE="$2"
+[[ -n "$TXT"   ]] || TXT="$3"
 
 for i in $(seq 0 "$WEEKS")
 do
-  D="$((i*7))"
-  ISO="$(date -d "$NOW + $D days" +'%F')"
-  MONTH="$(LC_ALL=en_US.UTF-8 date -d "$NOW + $D days" +'%b')"
-  DAY="$(date -d "$NOW + $D days" +'%d')"
+  DAYS="$((i*7))"
+  ISO="$(date -d "$DATE + $DAYS days" +'%F')"
+  MONTH="$(LC_ALL=en_US.UTF-8 date -d "$DATE + $DAYS days" +'%b')"
+  DAY="$(date -d "$DATE + $DAYS days" +'%d')"
   printf "%s %s%s\\n" "$ISO" "${MONTH^} $DAY" "$TXT"
 done
