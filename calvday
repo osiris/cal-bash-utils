@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# This script comes with ABSOLUTELY NO WARRANTY, use at own risk
+# Copyright (C) 2019 Osiris Alejandro Gomez <osiux@osiux.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+# shellcheck disable=SC2001
+
+BIN="$(basename "$0")"
+
+function die()
+{
+  echo >&2 "$1"
+  exit 1
+}
+
+function usage()
+{
+cat << EOF
+
+## \`$BIN\` generate and visualize one day bullet journal output using calvdays
+
+### Usage:
+
+\`\`\`bash
+
+  $BIN [DAYS]
+
+\`\`\`
+
+### Description
+
+Generate a open vim with file/s in
+\`~/.jrnl/YYYY/YYYY-MM/YYYY-MM-DD.jrnl\` with calendar day with events
+from \`~/.calendar\` using \`calvdays\` command, removing date and
+leaving only events and tasks.
+
+You can redefine current date using DATE variable.
+
+### Example:
+
+\`\`\`bash
+
+	$BIN
+
+	JUE 29/JUN -----------
+
+	08:00 · MN4N OSi
+	08:30 · GYM
+	16:15 · MN4N OSi
+	19:00 ∘ REDHAT K8S
+	20:30 ∘ EKO GUIA HACKER
+
+	DATE=2023-06-29 $BIN
+
+	JUE 29/JUN -----------
+
+	08:00 · MN4N OSi
+	08:30 · GYM
+	16:15 · MN4N OSi
+	19:00 ∘ REDHAT K8S
+	20:30 ∘ EKO GUIA HACKER
+
+\`\`\`
+
+EOF
+exit 0
+}
+
+[[ "$1" =~ ^[-]+(h|help) ]] && usage
+
+[[ -n "$BASH_DEBUG"  ]] && set -x
+[[ -n "$CALENDAR"    ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'    ]] && CALENDAR="$PWD/.calendar"
+[[ -e "$CALENDAR"    ]] || die "NOT FOUND .calendar"
+[[ -n "$DATE"        ]] && export DATE="$DATE"
+
+calvdays 1
