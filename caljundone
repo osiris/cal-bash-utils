@@ -36,28 +36,31 @@ then
 
 fi
 
-[[ -e "$TMPI"     ]] || die "NOT FOUND FILE $TMPI"
-[[ -n "$CALENDAR" ]] || CALENDAR="$HOME/.calendar"
-[[ -e '.calendar' ]] || CALENDAR="$PWD/.calendar"
-[[ -e "$CALENDAR" ]] || die "NOT FOUND $CALENDAR"
-[[ -z "$1"        ]] || JRNL="$1"
-[[ -n "$DATE"     ]] || DATE="$(date +%F)"
-[[ -n "$JRNL"     ]] || DATE="$(echo "$JRNL" | grep -Eo "[0-9]{4}-[0-9]{2}-[0-9]{2}")"
+[[ -e "$TMPI"         ]] || die "NOT FOUND FILE $TMPI"
+[[ -n "$CALENDAR"     ]] || CALENDAR="$HOME/.calendar"
+[[ -e '.calendar'     ]] && CALENDAR="$PWD/.calendar"
+[[ -e "$CALENDAR"     ]] || die "NOT FOUND $CALENDAR"
+[[ -z "$1"            ]] || JRNL="$1"
+[[ -n "$REGEX_DATE"   ]] || REGEX_DATE='[0-9]{4}-[0-9]{2}-[0-9]{2}'
+[[ -n "$JRNL"         ]] && DATE="$(echo "$JRNL" | grep -Eo "$REGEX_DATE")"
+[[ -n "$DATE"         ]] || DATE="$(date +%F)"
 
-CALDAY="$(LC_ALL=en_US.UTF-8 date +'%b %d' -d "$DATE")"
+CALDAY="$(LC_ALL=c date +'%b %d' -d "$DATE")"
 CALDAY="${CALDAY^}"
 
 while read -r LINE
 do
 
-  DONE="$CALDAY $LINE"
-  TODO="$CALDAY ${LINE//×/·}"
-
-  if sed -i --follow-symlinks "s/$DONE/$TODO/g" "$CALENDAR"
+  if [[ "$JRNL" = "$CALENDAR" ]]
   then
-    echo "${LINE//×/·}"
+    TODO="$(echo "$LINE" | tr '/' '_')"
+    DONE="$(echo "$LINE" | tr '_' '/' | tr '×' '·')"
   else
-    echo "$LINE"
+    TODO="$CALDAY $(echo "$LINE" | tr '/' '_')"
+    DONE="$CALDAY $(echo "$LINE" | tr '_' '/' | tr '×' '·')"
+    sed -i --follow-symlinks "s/$TODO/$DONE/g" "$CALENDAR"
   fi
+
+  echo "${LINE//×/·}"
 
 done < "$TMPI"
